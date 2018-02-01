@@ -74,12 +74,15 @@ class jugador(pygame.sprite.Sprite):
 		self.stagePosX = 0
 		self.xVelocidad = 0
 		self.mask = pygame.mask.from_surface(self.image)
-		
+
 	def Mover(self,time,keys,stagewidth):
 		if keys[K_LEFT]:
 			if self.rect.left >= 0:
 				self.xVelocidad=-self.velx
 				self.rect.centerx -= self.speed[1] * time
+				for objeto in escenario:
+					objeto.rect.centerx += self.speed[1] * time
+					objeto.mask = pygame.mask.from_surface(objeto.image)					
 			if not self.disparando:
 				self.row=0
 			if not self.saltando and not self.cayendo:
@@ -99,11 +102,14 @@ class jugador(pygame.sprite.Sprite):
 					else:
 						self.col = 2
 						self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
-						
+
 		elif keys[K_RIGHT]:
 			if self.rect.right <= stagewidth:
 				self.xVelocidad = self.velx
 				self.rect.centerx += self.speed[1] * time
+				for objeto in escenario:
+					objeto.rect.centerx -= self.speed[1] * time
+					objeto.mask = pygame.mask.from_surface(objeto.image)
 			if not self.disparando:
 				self.row=1
 			if not self.saltando and not self.cayendo:
@@ -189,10 +195,10 @@ class jugador(pygame.sprite.Sprite):
 				self.col = 3
 			self.row = 4
 			self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
-	
+
 	def update(self):
 		self.mask = pygame.mask.from_surface(self.image)
-		
+
 class oso(pygame.sprite.Sprite):
 	def __init__(self,imagen,transp,posx,posy,size,col,row):
 		pygame.sprite.Sprite.__init__(self)
@@ -206,7 +212,7 @@ class oso(pygame.sprite.Sprite):
 		self.rect.centerx = posx
 		self.rect.centery = posy
 		self.speed = 0
-	
+
 	def update(self, time, jug):
 		self.speed = 0.5
 		if self.rect.centerx > jug.jugadorPosX:
@@ -214,9 +220,9 @@ class oso(pygame.sprite.Sprite):
 			if self.col < 5:
 				self.col+=1
 			else:
-				self.col=1			
+				self.col=1
 			self.rect.centerx -= self.speed * time
-			
+
 		elif self.rect.centerx < jug.jugadorPosX:
 			self.row = 1
 			if self.col < 5:
@@ -224,21 +230,20 @@ class oso(pygame.sprite.Sprite):
 			else:
 				self.col=1
 			self.rect.centerx += self.speed * time
-		self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))		
+		self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
 
 class plataforma(pygame.sprite.Sprite):
-	def __init__(self,imagen):
-		pygame.sprite.Sprite.__init__(self)		
-		self.image = load_image(imagen)
-		self.image = pygame.transform.scale(self.image, (WIDTH-300, 30))
+	def __init__(self,imagen,bottom,left):
+		pygame.sprite.Sprite.__init__(self)
+		self.image = load_image(imagen, True)
 		self.rect = self.image.get_rect()
-		self.rect.bottom = HEIGHT-20
-		self.rect.left = 300
+		self.rect.bottom = bottom
+		self.rect.left = left
 		self.mask = pygame.mask.from_surface(self.image)
-					
+
 	#def update(self, jug):
 	#	self.posx = self.posx - jug.jugadorPosX
-		
+
 # ---------------------------------------------------------------------
 # Funciones generales
 # ---------------------------------------------------------------------
@@ -278,7 +283,7 @@ def sidescroll(fondo,stagewidth,pantalla,jugador):
 	pantalla.blit(fondo,(rel_x - fondo.get_rect().width, 0 ))
 	if rel_x < WIDTH:
 		pantalla.blit(fondo, (rel_x,0))
-	
+
 # ---------------------------------------------------------------------
 # Funciones del juego
 # ---------------------------------------------------------------------
@@ -290,14 +295,18 @@ def colisiones(balas, osos , plataformas, allsprites):
 				bala.kill()
 				oso.kill()
 	for plataforma in plataformas:
-		for sprite in allsprites:			
-			colision = plataforma.mask.overlap(sprite.mask, (WIDTH/2-sprite.jugadorPosX, SUELO+100-sprite.rect.top+20))
+		for sprite in allsprites:
+			colision = pygame.sprite.collide_mask(plataforma,sprite)
+			print sprite.rect.right, plataforma.rect.left
 			if colision:
 				sprite.cayendo = False
 				sprite.indiceVelocidad = 0
+				if sprite.rect.bottom-36 > plataforma.rect.top:
+					sprite.rect.bottom = plataforma.rect.top
 			else:
-				sprite.cayendo = True
-				
+				if not sprite.saltando:
+					sprite.cayendo = True
+
 def invocarOsos():
 	print
 	#if len(osos) < 1:
@@ -311,6 +320,7 @@ allsprites = pygame.sprite.Group()
 balas = pygame.sprite.Group()
 osos = pygame.sprite.Group()
 plataformas = pygame.sprite.Group()
+escenario = pygame.sprite.Group()
 
 def main():
 # Inicializaciones pygame
@@ -325,8 +335,9 @@ def main():
 	#cuadradoprueba = elemento('images/cuadrado1.png',True,1000,600,2.0,0.5,(40,40),0,0)
 	allsprites.add(jug)
 	clock = pygame.time.Clock()
-	plataforma1 = plataforma('images/cuadrado2.png')
+	plataforma1 = plataforma('images/plataforma.png', HEIGHT+2, 300)
 	plataformas.add(plataforma1)
+	escenario.add(plataforma1)
 	while True:
 		time = clock.tick(30)
 		for eventos in pygame.event.get():
