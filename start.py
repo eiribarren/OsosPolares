@@ -42,7 +42,8 @@ class bala(pygame.sprite.Sprite):
 		self.rect.centery = posy
 		self.speed = 0
 		self.orientacion = orientacion
-
+		self.mask = pygame.mask.from_surface(self.image)
+		
 	def update(self,time):
 		self.speed=3.0
 		if self.orientacion == "derecha":
@@ -60,144 +61,161 @@ class jugador(pygame.sprite.Sprite):
 		self.row = row
 		self.size = size
 		self.x, self.y = size
-		self.imagen = load_image(imagen, transp)
+		self.imagen = load_image(imagen, True)
+		self.imagen_transp=load_image('images/soldado_spritesheet_nada.png', True)		
 		self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
 		self.rect = self.image.get_rect()
 		self.rect.centerx = posx
 		self.rect.centery = posy
 		self.velx = velx
 		self.speed = [velx, vely]
+		self.vida = 5
 		self.saltando = False
 		self.cayendo = True
 		self.disparando = False
+		self.cargando = False
+		self.invulnerable = False
+		self.contador = 0
+		self.cargador = 250
 		self.indiceVelocidad = 0
 		self.stagePosX = 0
 		self.xVelocidad = 0
 		self.mask = pygame.mask.from_surface(self.image)
 
 	def Mover(self,time,keys,stagewidth):
-		if keys[K_LEFT]:
-			if self.rect.left >= 0:
-				self.xVelocidad=-self.velx
-				self.rect.centerx -= self.speed[1] * time
-				for objeto in escenario:
-					objeto.rect.centerx += self.speed[1] * time
-					objeto.mask = pygame.mask.from_surface(objeto.image)					
-			if not self.disparando:
-				self.row=0
-			if not self.saltando and not self.cayendo:
-				if self.row==3:
-					if self.col >1:
-						self.col-=1
-					else:
-						self.col=9
-					self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
-				else:
-					if self.col <=1:
-						self.col +=1
-						self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
-					elif self.col <9 and self.col>1:
-						self.col +=1
-						self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
-					else:
-						self.col = 2
-						self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
-
-		elif keys[K_RIGHT]:
-			if self.rect.right <= stagewidth:
-				self.xVelocidad = self.velx
-				self.rect.centerx += self.speed[1] * time
-				for objeto in escenario:
-					objeto.rect.centerx -= self.speed[1] * time
-					objeto.mask = pygame.mask.from_surface(objeto.image)
-			if not self.disparando:
-				self.row=1
-			if not self.saltando and not self.cayendo:
-				if self.row==2:
-					if self.col >1:
-						self.col-=1
-					else:
-						self.col=9
-					self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
-				else:
-					if self.col <=1:
-						self.col +=1
-						self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
-					elif self.col <9 and self.col>1:
-						self.col +=1
-						self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
-					else:
-						self.col = 2
-						self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
-		else:
-			self.xVelocidad = 0
-			if self.disparando:
-				self.col=0
-				self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
-			if not self.saltando and not self.cayendo and not self.disparando:
-				if self.row==4 and self.col<2 or self.row==2:
+		if self.vida > 0:
+			if keys[K_LEFT]:
+				if self.rect.left >= 0:
+					self.xVelocidad=-self.velx
+					self.rect.centerx -= self.speed[1] * time
+					for objeto in escenario:
+						objeto.rect.centerx += self.speed[1] * time
+						objeto.mask = pygame.mask.from_surface(objeto.image)					
+				if not self.disparando:
 					self.row=0
-				elif self.row==4 and self.col>1 or self.row==3:
+				if not self.saltando and not self.cayendo:
+					if self.row==3:
+						if self.col >1:
+							self.col-=1
+						else:
+							self.col=9
+					else:
+						if self.col <=1:
+							self.col +=1
+						elif self.col <9 and self.col>1:
+							self.col +=1
+						else:
+							self.col = 2
+
+			elif keys[K_RIGHT]:
+				if self.rect.right <= stagewidth:
+					self.xVelocidad = self.velx
+					self.rect.centerx += self.speed[1] * time
+					for objeto in escenario:
+						objeto.rect.centerx -= self.speed[1] * time
+						objeto.mask = pygame.mask.from_surface(objeto.image)
+				if not self.disparando:
 					self.row=1
-				if self.col==1:
-					self.col=1
+				if not self.saltando and not self.cayendo:
+					if self.row==2:
+						if self.col >1:
+							self.col-=1
+						else:
+							self.col=9
+					else:
+						if self.col <=1:
+							self.col +=1
+						elif self.col <9 and self.col>1:
+							self.col +=1
+						else:
+							self.col = 2
+			else:
+				self.xVelocidad = 0
+				if self.disparando:
+					self.col=0
+				if not self.saltando and not self.cayendo and not self.disparando:
+					if self.row==4 and self.col<2 or self.row==2:
+						self.row=0
+					elif self.row==4 and self.col>1 or self.row==3:
+						self.row=1
+					if self.col==1:
+						self.col=1
+					else:
+						self.col = 0
+
+			if not self.saltando and not self.cayendo:
+				if keys [K_UP]:
+					self.saltando = True
+
+				if keys [K_SPACE]:
+					#Mirando a la izquierda
+					self.disparando = True
+					
+					if self.cargador == 0:
+						self.cargando = True
+					if self.cargador == 250:
+						self.cargando = False
+						
+					if not self.cargando:
+						if self.row==2 or self.row==0:
+							newBala = bala('images/bala.png',True,self.jugadorPosX+90,self.rect.top+112,"derecha",(7,4),0,0)
+						elif self.row==3 or self.row==1:
+							newBala = bala('images/bala.png',True,self.jugadorPosX+150,self.rect.top+112,"izquierda",(7,4),1,0)
+						balas.add(newBala)
+						self.cargador -=10
+					else:
+						self.cargador +=5
+						
 				else:
-					self.col = 0
-				self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
+					self.disparando = False
 
-		if not self.saltando and not self.cayendo:
-			if keys [K_UP]:
-				self.saltando = True
+			if self.disparando:
+				if self.row==0 or self.row==2:
+					self.row=2
 
-			if keys [K_SPACE]:
-				#Mirando a la izquierda
-				self.disparando = True
-				if self.row==2 or self.row==0:
-					newBala = bala('images/bala.png',True,self.jugadorPosX+90,self.rect.top+112,"derecha",(7,4),0,0)
-				elif self.row==3 or self.row==1:
-					newBala = bala('images/bala.png',True,self.jugadorPosX+150,self.rect.top+112,"izquierda",(7,4),1,0)
-				balas.add(newBala)
-			else:
-				self.disparando = False
+				elif self.row==1 or self.row==3:
+					self.row=3
 
-		if self.disparando:
-			if self.row==0 or self.row==2:
-				self.row=2
+			if self.saltando:
+				self.disparando=False
+				self.rect.centery += VELOCIDAD_G[self.indiceVelocidad]
+				self.indiceVelocidad +=1
+				if self.indiceVelocidad >= len(VELOCIDAD_G)/2:
+					self.saltando = False
+					self.cayendo = True
+				else:
+					if self.row==0:
+						self.col = 0
+					elif self.row==1:
+						self.col = 2
+					self.row = 4
 
-			elif self.row==1 or self.row==3:
-				self.row=3
-
-		if self.saltando:
-			self.disparando=False
-			self.rect.centery += VELOCIDAD_G[self.indiceVelocidad]
-			self.indiceVelocidad +=1
-			if self.indiceVelocidad >= len(VELOCIDAD_G)/2:
-				self.saltando = False
-				self.cayendo = True
-			else:
-				if self.row==0:
-					self.col = 0
-				elif self.row==1:
-					self.col = 2
+			if self.cayendo:
+				if self.indiceVelocidad < len(VELOCIDAD_G)/2:
+					self.indiceVelocidad = len(VELOCIDAD_G)/2
+				self.rect.centery += VELOCIDAD_G[self.indiceVelocidad]
+				self.indiceVelocidad += 1
+				if self.indiceVelocidad >= len(VELOCIDAD_G)-1:
+					self.indiceVelocidad = len(VELOCIDAD_G)-1
+				if self.col == 0 or self.row == 0:
+					self.col = 1
+				elif self.col == 2 or self.row == 1:
+					self.col = 3
 				self.row = 4
-				self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
 
-		if self.cayendo:
-			if self.indiceVelocidad < len(VELOCIDAD_G)/2:
-				self.indiceVelocidad = len(VELOCIDAD_G)/2
-			self.rect.centery += VELOCIDAD_G[self.indiceVelocidad]
-			self.indiceVelocidad += 1
-			if self.indiceVelocidad >= len(VELOCIDAD_G)-1:
-				self.indiceVelocidad = len(VELOCIDAD_G)-1
-			if self.col == 0 or self.row == 0:
-				self.col = 1
-			elif self.col == 2 or self.row == 1:
-				self.col = 3
-			self.row = 4
-			self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
 
 	def update(self):
 		self.mask = pygame.mask.from_surface(self.image)
+		if self.invulnerable:
+			self.contador -= 1
+			if self.contador%12==0:
+				self.image = self.imagen_transp.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
+			else:
+				self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
+		else:
+			self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
+		if self.contador == 0:
+			self.invulnerable = False
 
 class oso(pygame.sprite.Sprite):
 	def __init__(self,imagen,transp,posx,posy,size,col,row):
@@ -212,26 +230,99 @@ class oso(pygame.sprite.Sprite):
 		self.rect.centerx = posx
 		self.rect.centery = posy
 		self.speed = 0
-
+		self.disparando = False
+		self.saltando = False
+		self.cayendo = True
+		self.indiceVelocidad = 0
+		self.cooldown = 0
+		self.mask = pygame.mask.from_surface(self.image)
+		
 	def update(self, time, jug):
 		self.speed = 0.5
-		if self.rect.centerx > jug.jugadorPosX:
+		if self.cooldown > 0:
+			self.cooldown-=1
+			
+		if self.rect.centerx > jug.jugadorPosX + 500:
 			self.row = 0
 			if self.col < 5:
 				self.col+=1
 			else:
 				self.col=1
 			self.rect.centerx -= self.speed * time
+			self.disparando = False
 
-		elif self.rect.centerx < jug.jugadorPosX:
+		elif self.rect.centerx < jug.jugadorPosX - 500:
 			self.row = 1
 			if self.col < 5:
 				self.col+=1
 			else:
 				self.col=1
 			self.rect.centerx += self.speed * time
+			self.disparando = False
+		else:
+			self.col = 0
+			if not self.cayendo:
+				self.disparando = True	
+		
+		if self.cayendo == True:
+			if self.indiceVelocidad < len(VELOCIDAD_G)/2:
+				self.indiceVelocidad = len(VELOCIDAD_G)/2
+			self.rect.centery += VELOCIDAD_G[self.indiceVelocidad]
+			self.indiceVelocidad += 1
+			if self.indiceVelocidad >= len(VELOCIDAD_G)-1:
+				self.indiceVelocidad = len(VELOCIDAD_G)-1
+			if (self.col == 0 and self.row == 2) or self.row == 0:
+				self.col = 1
+			elif (self.col == 2 and self.row == 2) or self.row == 1:
+				self.col = 3
+			self.row = 2
+		
+		if self.disparando == True and self.cooldown == 0:
+			self.cooldown=120
+			if self.row == 0:
+				newFuego = fuego('images/boladefuego.png', self.rect.left - 20, self.rect.centery + 5,(64,57),self.row)
+			else:
+				newFuego = fuego('images/boladefuego.png', self.rect.right + 20, self.rect.centery + 5,(64,57),self.row)
+			balas.add(newFuego)
+			
+		if self.rect.top > HEIGHT:
+			self.kill()			
+			
 		self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
+		self.mask = pygame.mask.from_surface(self.image)
 
+class fuego(pygame.sprite.Sprite):
+	def __init__(self,imagen,posx,posy,size,row):
+		pygame.sprite.Sprite.__init__(self)
+		self.col = 0
+		self.row = row
+		self.size = size
+		self.x, self.y = size
+		self.imagen = load_image(imagen, True)
+		self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
+		self.rect = self.image.get_rect()
+		self.rect.centerx = posx
+		self.rect.centery = posy
+		self.speed = 0
+		self.mask = pygame.mask.from_surface(self.image)
+				
+	def update(self,time):
+		self.speed=0.5
+		if self.col < 6:
+			self.col += 1
+		else:
+			self.col = 0
+		self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))			
+		self.mask = pygame.mask.from_surface(self.image)
+				
+		if self.row == 0:
+			self.rect.centerx -= self.speed * time
+		else:
+			self.rect.centerx += self.speed * time
+			
+		if self.rect.centerx >= WIDTH or self.rect.centerx<=0:
+			self.kill()
+		
 class plataforma(pygame.sprite.Sprite):
 	def __init__(self,imagen,bottom,left):
 		pygame.sprite.Sprite.__init__(self)
@@ -240,9 +331,6 @@ class plataforma(pygame.sprite.Sprite):
 		self.rect.bottom = bottom
 		self.rect.left = left
 		self.mask = pygame.mask.from_surface(self.image)
-
-	#def update(self, jug):
-	#	self.posx = self.posx - jug.jugadorPosX
 
 # ---------------------------------------------------------------------
 # Funciones generales
@@ -288,30 +376,49 @@ def sidescroll(fondo,stagewidth,pantalla,jugador):
 # Funciones del juego
 # ---------------------------------------------------------------------
 
-def colisiones(balas, osos , plataformas, allsprites):
+def colisiones(balas, osos , plataformas, jug):
 	for bala in balas:
+		colision = jug.mask.overlap(bala.mask,(bala.rect.centerx - jug.jugadorPosX,  jug.rect.bottom - 20 - bala.rect.centery))
+		if colision and not jug.invulnerable:
+			jug.vida -= 1
+			jug.invulnerable = True
+			jug.contador = 120
+						
 		for oso in osos:
 			if pygame.sprite.collide_mask(bala, oso):
 				bala.kill()
 				oso.kill()
+			if jug.mask.overlap(oso.mask, (oso.rect.centerx-jug.jugadorPosX, oso.rect.centery - jug.rect.centery)):
+				oso.kill()
+	
 	for plataforma in plataformas:
+		colision = jug.mask.overlap(plataforma.mask,(plataforma.rect.left-jug.jugadorPosX, plataforma.rect.centery - (jug.rect.bottom - 200)))
+		if colision:
+			jug.cayendo = False
+			jug.indiceVelocidad = 0
+			if jug.rect.bottom-36 > plataforma.rect.top:
+				jug.rect.bottom = plataforma.rect.top
+		else:
+			if not jug.saltando:
+				jug.cayendo = True
+				
 		for sprite in allsprites:
-			colision = pygame.sprite.collide_mask(plataforma,sprite)
-			print sprite.rect.right, plataforma.rect.left
+			colision = sprite.mask.overlap(plataforma.mask,(plataforma.rect.left-sprite.rect.left, plataforma.rect.centery-sprite.rect.centery))
 			if colision:
 				sprite.cayendo = False
 				sprite.indiceVelocidad = 0
-				if sprite.rect.bottom-36 > plataforma.rect.top:
-					sprite.rect.bottom = plataforma.rect.top
+				if sprite.rect.bottom > plataforma.rect.top:
+					sprite.rect.bottom = plataforma.rect.top+36
 			else:
 				if not sprite.saltando:
 					sprite.cayendo = True
 
 def invocarOsos():
-	print
-	#if len(osos) < 1:
-	#	newOso = oso('images/oso_spritesheet.png',True,WIDTH,SUELO+150,(267,267),0,0)
-	#	osos.add(newOso)
+	if len(osos) < 1:
+		newOso = oso('images/oso_spritesheet.png',True,WIDTH,SUELO+150,(267,267),0,0)
+		osos.add(newOso)
+		allsprites.add(newOso)
+		escenario.add(newOso)
 
 # ---------------------------------------------------------------------
 # Programa Principal
@@ -333,13 +440,12 @@ def main():
 # Inicializaciones elementos de juego
 	jug = jugador('images/soldado_spritesheet.png',True,WIDTH/2,SUELO+100,1.0,0.5,(267,267),0,1)
 	#cuadradoprueba = elemento('images/cuadrado1.png',True,1000,600,2.0,0.5,(40,40),0,0)
-	allsprites.add(jug)
 	clock = pygame.time.Clock()
-	plataforma1 = plataforma('images/plataforma.png', HEIGHT+2, 300)
+	plataforma1 = plataforma('images/plataforma.png', HEIGHT+2, 0)
 	plataformas.add(plataforma1)
 	escenario.add(plataforma1)
 	while True:
-		time = clock.tick(30)
+		time = clock.tick(60)
 		for eventos in pygame.event.get():
 			if eventos.type == QUIT:
 				sys.exit(0)
@@ -354,8 +460,8 @@ def main():
 		invocarOsos()
 		balas.update(time)
 		osos.update(time, jug)
-		allsprites.update()
-		colisiones(balas,osos,plataformas,allsprites)
+		jug.update()
+		colisiones(balas,osos,plataformas,jug)
 # Renderizamos
 		plataformas.draw(pantalla)
 		pantalla.blit(jug.image, (jug.jugadorPosX,jug.rect.top+20,267,267))
