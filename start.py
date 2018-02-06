@@ -67,6 +67,7 @@ class jugador(pygame.sprite.Sprite):
 		self.rect = self.image.get_rect()
 		self.rect.centerx = posx
 		self.rect.centery = posy
+		self.jugadorPosX = self.rect.centerx
 		self.velx = velx
 		self.speed = [velx, vely]
 		self.vida = 5
@@ -158,16 +159,13 @@ class jugador(pygame.sprite.Sprite):
 
 				if keys [K_SPACE]:
 					self.disparando = True
+					if self.row==0 or self.row==2:
+						self.row=2
 
+					elif self.row==1 or self.row==3:
+						self.row=3
 				else:
 					self.disparando = False
-
-			if self.disparando:
-				if self.row==0 or self.row==2:
-					self.row=2
-
-				elif self.row==1 or self.row==3:
-					self.row=3
 
 	def update(self):
 		self.contadorFrame += 1
@@ -180,19 +178,6 @@ class jugador(pygame.sprite.Sprite):
 		if self.contadorFrame > 2:
 			self.contadorFrame = 0
 		if self.vida > 0:
-			if self.cayendo:
-				if self.indiceVelocidad < len(VELOCIDAD_G)/2:
-					self.indiceVelocidad = len(VELOCIDAD_G)/2
-				self.rect.centery += VELOCIDAD_G[self.indiceVelocidad]
-				self.indiceVelocidad += 1
-				if self.indiceVelocidad >= len(VELOCIDAD_G)-1:
-					self.indiceVelocidad = len(VELOCIDAD_G)-1
-				if self.col == 0 or self.row == 0:
-					self.col = 1
-				elif self.col == 2 or self.row == 1:
-					self.col = 3
-				self.row = 4
-
 			if self.saltando:
 				self.disparando=False
 				self.rect.centery += VELOCIDAD_G[self.indiceVelocidad]
@@ -206,13 +191,27 @@ class jugador(pygame.sprite.Sprite):
 					elif self.row==1:
 						self.col = 2
 					self.row = 4
-					
+			
+			elif self.cayendo:
+				self.disparando = False
+				if self.indiceVelocidad < len(VELOCIDAD_G)/2:
+					self.indiceVelocidad = len(VELOCIDAD_G)/2
+				self.rect.centery += VELOCIDAD_G[self.indiceVelocidad]
+				self.indiceVelocidad += 1
+				if self.indiceVelocidad >= len(VELOCIDAD_G)-1:
+					self.indiceVelocidad = len(VELOCIDAD_G)-1
+				if self.col == 0 or self.row == 0:
+					self.col = 1
+				elif self.col == 2 or self.row == 1:
+					self.col = 3
+				self.row = 4					
+				
 			elif self.disparando or self.cargando:
 				if not self.cargando:
 					if self.row==2 or self.row==0:
-						newBala = bala('images/bala.png',True,self.jugadorPosX+90,self.rect.top+112,"derecha",(7,4),0,0)
+						newBala = bala('images/bala.png',True,self.jugadorPosX+80,self.rect.top+112,"derecha",(7,4),0,0)
 					elif self.row==3 or self.row==1:
-						newBala = bala('images/bala.png',True,self.jugadorPosX+150,self.rect.top+112,"izquierda",(7,4),1,0)
+						newBala = bala('images/bala.png',True,self.jugadorPosX+230,self.rect.top+112,"izquierda",(7,4),1,0)
 					balas.add(newBala)
 					self.cargador -=10
 				else:
@@ -222,6 +221,7 @@ class jugador(pygame.sprite.Sprite):
 					self.cargando = True
 				if self.cargador == 250:
 					self.cargando = False
+					
 		self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
 		self.mask = pygame.mask.from_surface(self.image)
 		
@@ -247,7 +247,7 @@ class oso(pygame.sprite.Sprite):
 		self.mask = pygame.mask.from_surface(self.image)
 		self.vida = 100
 
-	def update(self, time, jug):
+	def update(self, time, jug, plataformas):
 		if self.vida <= 0:
 			self.kill()
 
@@ -257,16 +257,16 @@ class oso(pygame.sprite.Sprite):
 		self.speed = 0.5
 		if self.cooldown > 0:
 			self.cooldown-=1
-
 		if self.rect.centerx > jug.jugadorPosX + 700:
-			self.row = 0
-			if self.contadorFrame == 0:
-				if self.col < 5:
-					self.col+=1
-				else:
-					self.col=1
-			self.rect.centerx -= self.speed * time
-			self.disparando = False
+			if comprobarSiCae(self, plataformas):
+				self.row = 0
+				if self.contadorFrame == 0:
+					if self.col < 5:
+						self.col+=1
+					else:
+						self.col=1
+				self.rect.centerx -= self.speed * time
+				self.disparando = False
 
 		elif self.rect.centerx < jug.jugadorPosX - 700:
 			self.row = 1
@@ -350,7 +350,9 @@ class plataforma(pygame.sprite.Sprite):
 		self.rect = self.image.get_rect()
 		self.rect.bottom = bottom
 		self.rect.left = left
+		self.posicioninicial = bottom, left
 		self.mask = pygame.mask.from_surface(self.image)
+		self.ultima = False
 
 # ---------------------------------------------------------------------
 # Funciones generales
@@ -398,12 +400,21 @@ def sidescroll(fondo,stagewidth,pantalla,jugador):
 # ---------------------------------------------------------------------
 # Funciones del juego
 # ---------------------------------------------------------------------
-def colisiones(objetos1, objetos2):
-	for objeto1 in objetos1:
-		for objeto2 in objetos2:
-			colision = sprite.mask.overlap(plataforma.mask,(plataforma.rect.left-sprite.rect.left, plataforma.rect.centery-sprite.rect.centery))
-			
-def colisionesJugador(plataformas, jug):
+def comprobarSiCae(oso, plataformas, orientacion):
+	if orientacion == 'izquierda':
+		for plataforma in plataformas:
+			if oso.mask.overlap(plataforma.mask, (plataforma.rect.left - (oso.rect.left-267), plataforma.rect.centery - oso.rect.centery)):
+				return True
+			else:
+				return False
+	else:
+		for plataforma in plataformas:
+			if oso.mask.overlap(plataforma.mask, (plataforma.rect.left - (oso.rect.left-267), plataforma.rect.centery - oso.rect.centery)):
+				return True
+			else:
+				return False		
+	
+def colisiones(balas, osos, plataformas, jug):
 	for bala in balas:
 		colision = jug.mask.overlap(bala.mask,(bala.rect.centerx - jug.jugadorPosX,  jug.rect.bottom - 20 - bala.rect.centery))
 		if colision and not jug.invulnerable:
@@ -427,6 +438,9 @@ def colisionesJugador(plataformas, jug):
 		if colision:
 			jug.cayendo = False
 			jug.indiceVelocidad = 0
+			for plataforma2 in plataformas:
+				plataforma2.ultima = False
+			plataforma.ultima = True
 			if jug.rect.bottom-36 > plataforma.rect.top:
 				jug.rect.bottom = plataforma.rect.top
 			break
@@ -434,6 +448,15 @@ def colisionesJugador(plataformas, jug):
 		else:
 			if not jug.saltando:
 				jug.cayendo = True
+				if jug.rect.top > HEIGHT and plataforma.ultima:
+					for plataforma3 in plataformas:
+						plataforma3.rect.bottom, plataforma3.rect.left = plataforma3.posicioninicial					
+					jug.rect.centerx = plataforma.rect.centerx
+					jug.stagePosX = 0
+					jug.rect.bottom = plataforma.rect.top
+					jug.vida -= 1
+					jug.invulnerable = True
+					jug.contadorInvulnerable = 240
 
 		for sprite in allsprites:
 			colision = sprite.mask.overlap(plataforma.mask,(plataforma.rect.left-sprite.rect.left, plataforma.rect.centery-sprite.rect.centery))
@@ -447,7 +470,7 @@ def colisionesJugador(plataformas, jug):
 					sprite.cayendo = True
 
 def invocarOsos(jug):
-	newOso1 = oso('images/oso_spritesheet.png',True,1600,SUELO+150,(267,267),0,0)
+	newOso1 = oso('images/oso_spritesheet.png',True,1600,SUELO+150,(267,267),0,0)			
 	osos.add(newOso1)
 	allsprites.add(newOso1)
 	escenario.add(newOso1)
@@ -464,9 +487,6 @@ def dibujarInterfaz(pantalla, jug, vida, osos):
 					pantalla.blit(vida,(161,20,47,46))
 					
 	for oso in osos:
-		pygame.draw.circle(pantalla, (255,255,0,0),(oso.rect.centerx,oso.rect.centery),25)
-		pygame.draw.circle(pantalla, (255,0,0,0),(oso.rect.right,oso.rect.centery),5)
-		pygame.draw.circle(pantalla, (255,0,0,0),(oso.rect.left,oso.rect.centery),5)
 		if oso.vida < 100:
 			pygame.draw.rect(pantalla, (255,0,0,255), (oso.rect.centerx, oso.rect.top, oso.vida, 5))
 
@@ -499,8 +519,8 @@ def main():
 	vida = load_image('images/soldado_vida.png', True)
 	#cuadradoprueba = elemento('images/cuadrado1.png',True,1000,600,2.0,0.5,(40,40),0,0)
 	clock = pygame.time.Clock()
-	colocarPlataformas(plataformas)
 	invocarOsos(jug)		
+	colocarPlataformas(plataformas)		
 	for platform in plataformas:
 		escenario.add(platform)
 	contadorInvocacion = 0
@@ -510,7 +530,8 @@ def main():
 			if eventos.type == QUIT:
 				sys.exit(0)
 # Procesamos jugador
-		sidescroll(background_image,stagewidth,pantalla,jug)
+		colisiones(balas,osos,plataformas,jug)
+		sidescroll(background_image,stagewidth,pantalla,jug)	
 		keys = pygame.key.get_pressed()
 		jug.Mover(time,keys,stagewidth)
 
@@ -518,9 +539,8 @@ def main():
 
 # Actualizamos estado de la partida
 		balas.update(time)
-		osos.update(time, jug)
+		osos.update(time, jug, plataformas)
 		jug.update()
-		colisiones(balas,osos,plataformas,jug)
 # Renderizamos
 		if not jug.contadorInvulnerable%12==0 or not jug.invulnerable:
 			pantalla.blit(jug.image, (jug.jugadorPosX,jug.rect.top+20,267,267))
