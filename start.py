@@ -11,22 +11,20 @@ WIDTH = 1280
 HEIGHT = 720
 SUELO = HEIGHT - 300
 VELOCIDAD_G = list([-12.0, -11.5, -11.0, -10.5, -10.0, -9.5, -9.0, -8.5, -8.0, -7.5, -7.0, -6.5, -6.0, -5.5, -5.0, -4.5, -4.0, -3.5, -3.0, -2.5, -2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0])
+pantalla = pygame.display.set_mode((WIDTH, HEIGHT))
+clock = pygame.time.Clock()
 # ---------------------------------------------------------------------
 # Clases
 # ---------------------------------------------------------------------
-class elemento(pygame.sprite.Sprite):
-	def __init__(self,imagen,transp,posx,posy,velx,vely,size,col,row):
+class final(pygame.sprite.Sprite):
+	def __init__(self,imagen, posx, posy):
 		pygame.sprite.Sprite.__init__(self)
-		self.col = col
-		self.row = row
-		self.size = size
-		self.x, self.y = size
-		self.imagen = pygame.image.load(imagen).convert_alpha()
-		self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
+		self.image = pygame.image.load(imagen).convert_alpha()
 		self.rect = self.image.get_rect()
+		self.mask = pygame.mask.from_surface(self.image)
 		self.rect.centerx = posx
-		self.rect.centery = posy
-		self.speed = [velx, vely]
+		self.rect.bottom = posy
+		self.posicioninicial = posy, posx
 
 class bala(pygame.sprite.Sprite):
 	def __init__(self,imagen,transp,posx,posy,orientacion,size,col,row):
@@ -62,7 +60,7 @@ class jugador(pygame.sprite.Sprite):
 		self.size = size
 		self.x, self.y = size
 		self.imagen = load_image(imagen, True)
-		self.imagen_transp=load_image('images/soldado_spritesheet_nada.png', True)
+		self.imagen_municion = load_image('images/munición.png', True)
 		self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
 		self.rect = self.image.get_rect()
 		self.rect.centerx = posx
@@ -78,10 +76,11 @@ class jugador(pygame.sprite.Sprite):
 		self.invulnerable = False
 		self.contadorInvulnerable = 0
 		self.contadorFrame = 2
-		self.cargador = 250
+		self.cargador = 100
 		self.indiceVelocidad = 0
 		self.stagePosX = 0
 		self.xVelocidad = 0
+		self.puntuacion = 0
 		self.mask = pygame.mask.from_surface(self.image)
 
 	def Mover(self,time,keys,stagewidth):
@@ -203,17 +202,17 @@ class jugador(pygame.sprite.Sprite):
 			elif self.disparando or self.cargando:
 				if not self.cargando:
 					if self.row==2 or self.row==0:
-						newBala = bala('images/bala.png',True,self.jugadorPosX+80,self.rect.top+112,"derecha",(7,4),0,0)
+						newBala = bala('images/bala.png',True,self.jugadorPosX+80,self.rect.top+112,"derecha",(26,9),0,0)
 					elif self.row==3 or self.row==1:
-						newBala = bala('images/bala.png',True,self.jugadorPosX+230,self.rect.top+112,"izquierda",(7,4),1,0)
+						newBala = bala('images/bala.png',True,self.jugadorPosX+230,self.rect.top+112,"izquierda",(26,9),1,0)
 					balas.add(newBala)
-					self.cargador -=10
+					self.cargador -=4
 				else:
-					self.cargador +=5
+					self.cargador +=1
 
 				if self.cargador == 0:
 					self.cargando = True
-				if self.cargador == 250:
+				if self.cargador == 100:
 					self.cargando = False
 
 		self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
@@ -268,6 +267,7 @@ class oso(pygame.sprite.Sprite):
 					self.col = 0
 					self.row += 1
 				else:
+					jug.puntuacion += 1
 					self.kill()
 
 				self.imagen = pygame.transform.scale(self.muerte.subsurface((self.x*self.col, self.y*self.row, self.x, self.y)),(267,267))
@@ -399,7 +399,8 @@ def load_image(filename, transparent=False):
 	return image
 
 def texto(texto, fuente, posx, posy, color):
-	salida = pygame.font.Font.render(fuente, texto, 1, color)
+	entrada = pygame.font.Font(fuente, 25)
+	salida = pygame.font.Font.render(entrada, texto, 1, color)
 	salida_rect = salida.get_rect()
 	salida_rect.centerx = posx
 	salida_rect.centery = posy
@@ -495,8 +496,8 @@ def colisiones(balas, osos, plataformas, jug):
 			if colision != None:
 				oso.cayendo = False
 				oso.indiceVelocidad = 0
-				if oso.rect.bottom + 100 > plataforma.rect.top:
-					oso.rect.bottom = plataforma.rect.top+80
+				if oso.rect.bottom + 60 > plataforma.rect.top:
+					oso.rect.bottom = plataforma.rect.top+50
 				colision = None
 				break
 
@@ -508,7 +509,7 @@ def colisiones(balas, osos, plataformas, jug):
 
 def invocarOsos(plataformas):
 	for plataforma in plataformas:
-		if plataforma.rect.left==0:
+		if plataforma.rect.left == 0 or plataforma.rect.left == 7000:
 			continue
 		else:
 			newOso = oso('images/oso_spritesheet.png',True,plataforma.rect.centerx,plataforma.rect.top,(267,267),0,0)
@@ -520,7 +521,10 @@ def invocarOsos(plataformas):
 def dibujarInterfaz(pantalla, jug, vida, osos):
 	for i in range(jug.vida):
 		pantalla.blit(vida,(20+(47*i),20,47,46))
-
+	
+	for i in range(jug.cargador):
+		pantalla.blit(jug.imagen_municion,(WIDTH-20-9*(25-int(i/4)),15,9,26))
+		
 	for oso in osos:
 		if oso.vida < 100 and oso.vida > 0 and  oso.row==0:
 			pygame.draw.rect(pantalla, (255,0,0,255), (oso.rect.centerx, oso.rect.top, oso.vida, 5))
@@ -534,8 +538,9 @@ def colocarPlataformas(plataformas):
 	plataforma4 = plataforma('images/plataforma.png', HEIGHT-400, 2500, 750, 100)
 	plataforma5 = plataforma('images/plataforma.png', HEIGHT+2, 4000, 1200 ,100)
 	plataforma6 = plataforma('images/plataforma.png', HEIGHT-300, 5500, 1000 ,100)
-	plataformas.add(plataforma1,plataforma2,plataforma3,plataforma4, plataforma5, plataforma6)
-
+	plataforma7 = plataforma('images/plataforma.png', HEIGHT-100, 7000, 1000 ,100)	
+	plataformas.add(plataforma1,plataforma2,plataforma3,plataforma4, plataforma5, plataforma6, plataforma7)
+	allsprites.add(plataformas)
 # ---------------------------------------------------------------------
 # Programa Principal
 # ---------------------------------------------------------------------
@@ -547,7 +552,7 @@ escenario = pygame.sprite.Group()
 
 def main():
 # Inicializaciones pygame
-	pantalla = pygame.display.set_mode((WIDTH, HEIGHT))
+	fin = False
 	pygame.display.set_caption("Juego Epumer")
 	background_image = load_image('images/fondo.png')
 	fondoancho, fondoaltura = background_image.get_rect().size
@@ -555,15 +560,17 @@ def main():
 
 # Inicializaciones elementos de juego
 	jug = jugador('images/soldado_spritesheet.png',True,WIDTH/2,SUELO+100,7.0,0.5,(267,267),0,1)
+	final_nivel = final('images/final.png', 7500, HEIGHT-250)
+	allsprites.add(jug, final_nivel)
 	vida = load_image('images/soldado_vida.png', True)
 	#cuadradoprueba = elemento('images/cuadrado1.png',True,1000,600,2.0,0.5,(40,40),0,0)
-	clock = pygame.time.Clock()
 	colocarPlataformas(plataformas)
 	invocarOsos(plataformas)
+	escenario.add(final_nivel)
 	for platform in plataformas:
 		escenario.add(platform)
 	contadorInvocacion = 0
-	while True:
+	while jug.vida > 0 and not fin:
 		time = clock.tick(60)
 		for eventos in pygame.event.get():
 			if eventos.type == QUIT:
@@ -573,29 +580,75 @@ def main():
 		sidescroll(background_image,stagewidth,pantalla,jug)
 		keys = pygame.key.get_pressed()
 		jug.Mover(time,keys,stagewidth)
-
-# Procesamos ia
+		if jug.mask.overlap(final_nivel.mask,(final_nivel.rect.centerx - jug.jugadorPosX,  jug.rect.bottom - final_nivel.rect.centery)):
+			fin = True
 
 # Actualizamos estado de la partida
 		plataformas.update()
 		balas.update(time)
 		osos.update(time, jug, plataformas)
 		jug.update()
+		p_jug, p_jug_rect = texto(str(jug.puntuacion),'fonts/SaucerBB.ttf',WIDTH/2, 40,(255,255,255))
+		
 # Renderizamos
 		plataformas.draw(pantalla)
 		if not jug.contadorInvulnerable%12==0 or not jug.invulnerable:
 			pantalla.blit(jug.image, (jug.jugadorPosX,jug.rect.top+20,267,267))
-
-		if jug.cargando:
-			pygame.draw.rect(pantalla, (0,255,0,255), (jug.jugadorPosX+jug.rect.width/4, jug.rect.centery, jug.cargador/2, 5))
 		balas.draw(pantalla)
 		osos.draw(pantalla)
+		pantalla.blit(final_nivel.image, (final_nivel.rect.centerx, final_nivel.rect.centery,128,192))
+		pantalla.blit(p_jug, p_jug_rect)
 		dibujarInterfaz(pantalla, jug, vida, osos)
-		"""pygame.draw.circle(pantalla, (255,255,0,0), (jug.jugadorPosX,jug.rect.centery),25)
-		pantalla.blit(jug.bala.image, (jug.bala.rect)) """
 		pygame.display.flip()
+	if not vida > 0:
+		return False
+	elif fin:
+		return True
+
+def gameOver():
+	for i in allsprites:
+		i.kill()
+	game_over = load_image('images/game_over.png')
+	game_over_image = pygame.transform.scale(game_over, (WIDTH,HEIGHT))
+	while True:
+		time = clock.tick(60)
+		for eventos in pygame.event.get():
+			if eventos.type == QUIT:
+				sys.exit(0)			
+		pantalla.blit(game_over_image, (0,0,WIDTH,HEIGHT))
+		keys = pygame.key.get_pressed()
+		pygame.display.flip()		
+		if keys[K_RETURN]:
+			return True
+		elif keys[K_ESCAPE]:
+			return False
+			
 	return 0
+	
+def youWin():
+	for i in allsprites:
+		i.kill()
+	you_win = load_image('images/you_win.png')
+	you_win_image = pygame.transform.scale(you_win, (WIDTH,HEIGHT))
+	while True:
+		time = clock.tick(60)
+		for eventos in pygame.event.get():
+			if eventos.type == QUIT:
+				sys.exit(0)			
+		pantalla.blit(you_win_image, (0,0,WIDTH,HEIGHT))
+		keys = pygame.key.get_pressed()
+		pygame.display.flip()		
+		if keys:
+			return False
+			
+	return 0	
 
 if __name__ == '__main__':
-	pygame.init()
-	main()
+	continuar = True
+	while continuar:
+		pygame.init()
+		if not main():
+			continuar = gameOver()
+		else:
+			continuar = youWin()
+	sys.exit(0)				
