@@ -536,7 +536,7 @@ def dibujarInterfaz(pantalla, jug, vida, osos):
 def colocarPlataformas(plataformas):
 	plataforma1 = plataforma('images/plataforma.png', HEIGHT+2, 0, 1250, 100)
 	plataforma2 = plataforma('images/plataforma.png', HEIGHT-50, 1600, 750, 100)
-	plataforma3 = plataforma('images/plataforma.png', HEIGHT+2, 3000, 1000, 100)
+	plataforma3 = plataforma('images/plataforma.png', HEIGHT+2, 3000, 1100, 100)
 	plataforma4 = plataforma('images/plataforma.png', HEIGHT-400, 2500, 750, 100)
 	plataforma5 = plataforma('images/plataforma.png', HEIGHT+2, 4000, 1200 ,100)
 	plataforma6 = plataforma('images/plataforma.png', HEIGHT-300, 5500, 1000 ,100)
@@ -551,6 +551,7 @@ balas = pygame.sprite.Group()
 osos = pygame.sprite.Group()
 plataformas = pygame.sprite.Group()
 escenario = pygame.sprite.Group()
+puntuacion_final = 0
 
 def main():
 # Inicializaciones pygame
@@ -602,6 +603,7 @@ def main():
 		pantalla.blit(p_jug, p_jug_rect)
 		dibujarInterfaz(pantalla, jug, vida, osos)
 		pygame.display.flip()
+	puntuacion_final = jug.puntuacion + jug.vida
 	if not vida > 0:
 		return False
 	elif fin:
@@ -616,6 +618,8 @@ def gameOver():
 	continuar_image = pygame.transform.scale(continuar_imagen,(25,25))
 	salir_imagen = load_image('images/escape.png',True)
 	salir_image = pygame.transform.scale(salir_imagen,(25,25))
+	continuar_txt, continuar_txt_rect = texto('Continuar','fonts/SaucerBB.ttf',WIDTH-150,HEIGHT-45,(255,255,255))
+	salir_txt, salir_txt_rect = texto('Salir','fonts/SaucerBB.ttf',120,HEIGHT-45,(255,255,255))
 	while True:
 		time = clock.tick(60)
 		for eventos in pygame.event.get():
@@ -623,6 +627,8 @@ def gameOver():
 				sys.exit(0)			
 		pantalla.blit(game_over_image, (0,0,WIDTH,HEIGHT))
 		pantalla.blit(continuar_image, (WIDTH-60, HEIGHT-60,50,50))
+		pantalla.blit(continuar_txt, continuar_txt_rect)
+		pantalla.blit(salir_txt, salir_txt_rect)		
 		pantalla.blit(salir_image, (45, HEIGHT-60,50,50))		
 		keys = pygame.key.get_pressed()
 		pygame.display.flip()		
@@ -638,22 +644,26 @@ def youWin():
 		i.kill()
 	you_win = load_image('images/you_win.png')
 	you_win_image = pygame.transform.scale(you_win, (WIDTH,HEIGHT))
+	continuar_imagen = load_image('images/enter.png',True)
+	continuar_image = pygame.transform.scale(continuar_imagen,(25,25))	
+	fin_txt, fin_txt_rect = texto('Pulsa        para salir','fonts/SaucerBB.ttf',WIDTH/2,HEIGHT/2+200,(255,255,255)) 
 	while True:
 		time = clock.tick(60)
 		for eventos in pygame.event.get():
 			if eventos.type == QUIT:
 				sys.exit(0)			
 		pantalla.blit(you_win_image, (0,0,WIDTH,HEIGHT))
+		pantalla.blit(continuar_image, (WIDTH/2-45, HEIGHT/2+185,50,50))
+		pantalla.blit(fin_txt, fin_txt_rect)		
 		keys = pygame.key.get_pressed()
 		pygame.display.flip()		
-		if keys:
+		if keys[K_RETURN]:
 			return False
 			
 	return 0	
 
 if __name__ == '__main__':
 	continuar = True
-	gameOver()
 	while continuar:
 		pygame.init()
 		if not main():
