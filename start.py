@@ -277,18 +277,7 @@ class oso(pygame.sprite.Sprite):
 			self.speed = 0.5
 			if self.cooldown > 0:
 				self.cooldown-=1
-			if not self.derecha:
-			 	self.izquierda = comprobarSiCae(self, plataformas, 'izquierda')
-				if self.izquierda:
-					if jug.jugadorPosX > self.rect.centerx - 600 and jug.jugadorPosX < self.rect.centerx:
-						if not self.cayendo:
-							self.col=0
-							self.disparando = True
-					else:
-						self.rect.centerx -= self.speed * time
-						self.disparando = False
-					self.row = 0
-
+				
 			if not self.izquierda:
 				self.derecha = comprobarSiCae(self, plataformas, 'derecha')
 				if self.derecha:
@@ -301,6 +290,18 @@ class oso(pygame.sprite.Sprite):
 						self.rect.centerx += self.speed * time
 						self.disparando = False
 					self.row = 1
+									
+			if not self.derecha:
+			 	self.izquierda = comprobarSiCae(self, plataformas, 'izquierda')
+				if self.izquierda:
+					if jug.jugadorPosX > self.rect.centerx - 600 and jug.jugadorPosX < self.rect.centerx:
+						if not self.cayendo:
+							self.col=0
+							self.disparando = True
+					else:
+						self.rect.centerx -= self.speed * time
+						self.disparando = False
+					self.row = 0
 
 			if (self.izquierda or self.derecha) and not self.disparando:
 				if self.contadorFrame == 0:
@@ -434,17 +435,18 @@ def comprobarSiCae(oso, plataformas, orientacion):
 	for suelo in plataformas:
 		if oso.mask.overlap(suelo.mask,((suelo.rect.left-oso.rect.left),suelo.rect.top-oso.rect.top)):
 			if orientacion == 'izquierda':
-				if oso.mask.overlap(suelo.mask,((suelo.rect.left-oso.rect.left) + 267,suelo.rect.top-oso.rect.top)):
+				if oso.mask.overlap(suelo.mask,((suelo.rect.left-oso.rect.left) + 150,suelo.rect.top-oso.rect.top)):
 					return True
 				else:
 					return False
 			else:
-				if oso.mask.overlap(suelo.mask,((suelo.rect.left-oso.rect.left) - 267,suelo.rect.top-oso.rect.top)):
+				if oso.mask.overlap(suelo.mask,((suelo.rect.left-oso.rect.left) - 150,suelo.rect.top-oso.rect.top)):
 					return True
 				else:
 					return False
 		else:
 			continue
+	return False
 
 def colisiones(balas, osos, plataformas, jug):
 	for bala in balas:
@@ -496,8 +498,8 @@ def colisiones(balas, osos, plataformas, jug):
 			if colision != None:
 				oso.cayendo = False
 				oso.indiceVelocidad = 0
-				if oso.rect.bottom + 60 > plataforma.rect.top:
-					oso.rect.bottom = plataforma.rect.top+50
+				if oso.rect.bottom + 130 > plataforma.rect.top:
+					oso.rect.bottom = plataforma.rect.top+70
 				colision = None
 				break
 
@@ -610,12 +612,18 @@ def gameOver():
 		i.kill()
 	game_over = load_image('images/game_over.png')
 	game_over_image = pygame.transform.scale(game_over, (WIDTH,HEIGHT))
+	continuar_imagen = load_image('images/enter.png',True)
+	continuar_image = pygame.transform.scale(continuar_imagen,(25,25))
+	salir_imagen = load_image('images/escape.png',True)
+	salir_image = pygame.transform.scale(salir_imagen,(25,25))
 	while True:
 		time = clock.tick(60)
 		for eventos in pygame.event.get():
 			if eventos.type == QUIT:
 				sys.exit(0)			
 		pantalla.blit(game_over_image, (0,0,WIDTH,HEIGHT))
+		pantalla.blit(continuar_image, (WIDTH-60, HEIGHT-60,50,50))
+		pantalla.blit(salir_image, (45, HEIGHT-60,50,50))		
 		keys = pygame.key.get_pressed()
 		pygame.display.flip()		
 		if keys[K_RETURN]:
@@ -645,6 +653,7 @@ def youWin():
 
 if __name__ == '__main__':
 	continuar = True
+	gameOver()
 	while continuar:
 		pygame.init()
 		if not main():
