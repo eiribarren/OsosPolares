@@ -473,7 +473,7 @@ def colisiones(balas, osos, plataformas, jug):
 			jug.cayendo = False
 			jug.indiceVelocidad = 0
 			if jug.rect.bottom + 100 > plataforma.rect.top:
-				jug.rect.bottom = plataforma.rect.top + 25
+				jug.rect.bottom = plataforma.rect.top + 15
 			colision = False
 			break
 
@@ -530,15 +530,15 @@ def dibujarInterfaz(pantalla, jug, vida, osos):
 	for oso in osos:
 		if oso.vida < 100 and oso.vida > 0 and  oso.row==0:
 			pygame.draw.rect(pantalla, (255,0,0,255), (oso.rect.centerx, oso.rect.top, oso.vida, 5))
-		elif oso.vida < 100 and oso.vida >0 and oso.row==1:
+		elif oso.vida < 100 and oso.vida > 0 and oso.row==1:
 			pygame.draw.rect(pantalla, (255,0,0,255), (oso.rect.centerx - 100, oso.rect.top, oso.vida, 5))
 
 def colocarPlataformas(plataformas):
-	plataforma1 = plataforma('images/plataforma.png', HEIGHT+2, 0, 1250, 100)
+	plataforma1 = plataforma('images/plataforma.png', HEIGHT+50, 0, 1250, 100)
 	plataforma2 = plataforma('images/plataforma.png', HEIGHT-50, 1600, 750, 100)
-	plataforma3 = plataforma('images/plataforma.png', HEIGHT+2, 3000, 1100, 100)
+	plataforma3 = plataforma('images/plataforma.png', HEIGHT+50, 3000, 1100, 100)
 	plataforma4 = plataforma('images/plataforma.png', HEIGHT-400, 2500, 750, 100)
-	plataforma5 = plataforma('images/plataforma.png', HEIGHT+2, 4000, 1200 ,100)
+	plataforma5 = plataforma('images/plataforma.png', HEIGHT+50, 4000, 1200 ,100)
 	plataforma6 = plataforma('images/plataforma.png', HEIGHT-300, 5500, 1000 ,100)
 	plataforma7 = plataforma('images/plataforma.png', HEIGHT-100, 7000, 1000 ,100)	
 	plataformas.add(plataforma1,plataforma2,plataforma3,plataforma4, plataforma5, plataforma6, plataforma7)
