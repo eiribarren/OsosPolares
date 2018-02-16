@@ -418,10 +418,7 @@ def sidescroll(fondo,stagewidth,pantalla,jugador):
 		jugador.jugadorPosX = jugador.rect.centerx - stagewidth + WIDTH - 100
 	else:
 		jugador.jugadorPosX = WIDTH/2 - 100
-		if not jugador.disparando:
-			jugador.stagePosX += -jugador.xVelocidad
-		else:
-			jugador.stagePosX += -jugador.xVelocidad/20
+		jugador.stagePosX += -jugador.xVelocidad
 
 	rel_x = jugador.stagePosX % fondo.get_rect().width
 	pantalla.blit(fondo,(rel_x - fondo.get_rect().width, 0 ))
@@ -534,11 +531,11 @@ def dibujarInterfaz(pantalla, jug, vida, osos):
 			pygame.draw.rect(pantalla, (255,0,0,255), (oso.rect.centerx - 100, oso.rect.top, oso.vida, 5))
 
 def colocarPlataformas(plataformas):
-	plataforma1 = plataforma('images/plataforma.png', HEIGHT+50, 0, 1250, 100)
+	plataforma1 = plataforma('images/plataforma.png', HEIGHT+30, 0, 1250, 100)
 	plataforma2 = plataforma('images/plataforma.png', HEIGHT-50, 1600, 750, 100)
-	plataforma3 = plataforma('images/plataforma.png', HEIGHT+50, 3000, 1100, 100)
+	plataforma3 = plataforma('images/plataforma.png', HEIGHT+30, 3000, 1100, 100)
 	plataforma4 = plataforma('images/plataforma.png', HEIGHT-400, 2500, 750, 100)
-	plataforma5 = plataforma('images/plataforma.png', HEIGHT+50, 4000, 1200 ,100)
+	plataforma5 = plataforma('images/plataforma.png', HEIGHT+30, 4000, 1200 ,100)
 	plataforma6 = plataforma('images/plataforma.png', HEIGHT-300, 5500, 1000 ,100)
 	plataforma7 = plataforma('images/plataforma.png', HEIGHT-100, 7000, 1000 ,100)	
 	plataformas.add(plataforma1,plataforma2,plataforma3,plataforma4, plataforma5, plataforma6, plataforma7)
