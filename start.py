@@ -60,7 +60,7 @@ class jugador(pygame.sprite.Sprite):
 		self.size = size
 		self.x, self.y = size
 		self.imagen = load_image(imagen, True)
-		self.imagen_municion = load_image('images/munición.png', True)
+		self.imagen_municion = load_image('images/municion.png', True)
 		self.image = self.imagen.subsurface((self.x*self.col, self.y*self.row, self.x, self.y))
 		self.rect = self.image.get_rect()
 		self.rect.centerx = posx
@@ -277,7 +277,7 @@ class oso(pygame.sprite.Sprite):
 			self.speed = 0.5
 			if self.cooldown > 0:
 				self.cooldown-=1
-				
+
 			if not self.izquierda:
 				self.derecha = comprobarSiCae(self, plataformas, 'derecha')
 				if self.derecha:
@@ -290,7 +290,7 @@ class oso(pygame.sprite.Sprite):
 						self.rect.centerx += self.speed * time
 						self.disparando = False
 					self.row = 1
-									
+
 			if not self.derecha:
 			 	self.izquierda = comprobarSiCae(self, plataformas, 'izquierda')
 				if self.izquierda:
@@ -520,10 +520,10 @@ def invocarOsos(plataformas):
 def dibujarInterfaz(pantalla, jug, vida, osos):
 	for i in range(jug.vida):
 		pantalla.blit(vida,(20+(47*i),20,47,46))
-	
+
 	for i in range(jug.cargador):
 		pantalla.blit(jug.imagen_municion,(WIDTH-20-9*(25-int(i/4)),15,9,26))
-		
+
 	for oso in osos:
 		if oso.vida < 100 and oso.vida > 0 and  oso.row==0:
 			pygame.draw.rect(pantalla, (255,0,0,255), (oso.rect.centerx, oso.rect.top, oso.vida, 5))
@@ -537,7 +537,7 @@ def colocarPlataformas(plataformas):
 	plataforma4 = plataforma('images/plataforma.png', HEIGHT-400, 2500, 750, 100)
 	plataforma5 = plataforma('images/plataforma.png', HEIGHT+30, 4000, 1200 ,100)
 	plataforma6 = plataforma('images/plataforma.png', HEIGHT-300, 5500, 1000 ,100)
-	plataforma7 = plataforma('images/plataforma.png', HEIGHT-100, 7000, 1000 ,100)	
+	plataforma7 = plataforma('images/plataforma.png', HEIGHT-100, 7000, 1000 ,100)
 	plataformas.add(plataforma1,plataforma2,plataforma3,plataforma4, plataforma5, plataforma6, plataforma7)
 	allsprites.add(plataformas)
 # ---------------------------------------------------------------------
@@ -589,7 +589,7 @@ def main():
 		osos.update(time, jug, plataformas)
 		jug.update()
 		p_jug, p_jug_rect = texto(str(jug.puntuacion),'fonts/SaucerBB.ttf',WIDTH/2, 40,(255,255,255))
-		
+
 # Renderizamos
 		plataformas.draw(pantalla)
 		if not jug.contadorInvulnerable%12==0 or not jug.invulnerable:
@@ -621,43 +621,43 @@ def gameOver():
 		time = clock.tick(60)
 		for eventos in pygame.event.get():
 			if eventos.type == QUIT:
-				sys.exit(0)			
+				sys.exit(0)
 		pantalla.blit(game_over_image, (0,0,WIDTH,HEIGHT))
 		pantalla.blit(continuar_image, (WIDTH-60, HEIGHT-60,50,50))
 		pantalla.blit(continuar_txt, continuar_txt_rect)
-		pantalla.blit(salir_txt, salir_txt_rect)		
-		pantalla.blit(salir_image, (45, HEIGHT-60,50,50))		
+		pantalla.blit(salir_txt, salir_txt_rect)
+		pantalla.blit(salir_image, (45, HEIGHT-60,50,50))
 		keys = pygame.key.get_pressed()
-		pygame.display.flip()		
+		pygame.display.flip()
 		if keys[K_RETURN]:
 			return True
 		elif keys[K_ESCAPE]:
 			return False
-			
+
 	return 0
-	
+
 def youWin():
 	for i in allsprites:
 		i.kill()
 	you_win = load_image('images/you_win.png')
 	you_win_image = pygame.transform.scale(you_win, (WIDTH,HEIGHT))
 	continuar_imagen = load_image('images/enter.png',True)
-	continuar_image = pygame.transform.scale(continuar_imagen,(25,25))	
-	fin_txt, fin_txt_rect = texto('Pulsa        para salir','fonts/SaucerBB.ttf',WIDTH/2,HEIGHT/2+200,(255,255,255)) 
+	continuar_image = pygame.transform.scale(continuar_imagen,(25,25))
+	fin_txt, fin_txt_rect = texto('Pulsa        para salir','fonts/SaucerBB.ttf',WIDTH/2,HEIGHT/2+200,(255,255,255))
 	while True:
 		time = clock.tick(60)
 		for eventos in pygame.event.get():
 			if eventos.type == QUIT:
-				sys.exit(0)			
+				sys.exit(0)
 		pantalla.blit(you_win_image, (0,0,WIDTH,HEIGHT))
 		pantalla.blit(continuar_image, (WIDTH/2-45, HEIGHT/2+185,50,50))
-		pantalla.blit(fin_txt, fin_txt_rect)		
+		pantalla.blit(fin_txt, fin_txt_rect)
 		keys = pygame.key.get_pressed()
-		pygame.display.flip()		
+		pygame.display.flip()
 		if keys[K_RETURN]:
 			return False
-			
-	return 0	
+
+	return 0
 
 if __name__ == '__main__':
 	continuar = True
@@ -667,4 +667,4 @@ if __name__ == '__main__':
 			continuar = gameOver()
 		else:
 			continuar = youWin()
-	sys.exit(0)				
+	sys.exit(0)
